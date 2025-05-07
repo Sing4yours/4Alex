@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our little world</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background-color: white;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 800px;
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      color: #4b0082;
+      font-size: 36px;
+    }
+
+    .profile {
+      text-align: center;
+      margin-bottom: 30px;
+      cursor: pointer;
+    }
+
+    .profile-img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #9370db;
+      transition: transform 0.2s;
+    }
+
+    .profile:hover .profile-img {
+      transform: scale(1.05);
+    }
+
+    .date-section {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f0e6ff;
+      border-radius: 10px;
+    }
+
+    .date-section h2 {
+      color: #4b0082;
+      margin-top: 0;
+    }
+
+    .days-count {
+      font-size: 24px;
+      font-weight: bold;
+      color: #9370db;
+    }
+
+    .diary-section h2 {
+      color: #4b0082;
+      border-bottom: 2px solid #9370db;
+      padding-bottom: 10px;
+    }
+
+    .diary-entry {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      border-left: 3px solid #9370db;
+      position: relative;
+    }
+
+    .diary-date {
+      font-weight: bold;
+      color: #4b0082;
+      margin-bottom: 10px;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #e6e6fa;
+      color: #4b0082;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background-color: #d8d8f0;
+    }
+
+    .add-diary {
+      margin-top: 20px;
+    }
+
+    .add-diary textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .add-diary button {
+      background-color: #4b0082;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .add-diary button:hover {
+      background-color: #6a0dad;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>A&M's Secret Planet</h1>
+      <p>Secretly convey whispers and record our moments</p>
+    </div>
+    <div class="profile" onclick="document.getElementById('fileInput').click()">
+      <img src="your-avatar-url-here.jpg" alt="我的头像" class="profile-img" id="myAvatar">
+    </div>
+    <div class="date-section">
+      <h2>You won't believe it!</h2>
+      <p>We met on <span id="meetDate"></span></p>
+      <p>It's been <span id="daysTogether" class="days-count">0</span> days since we shared our lives </p>
+    </div>
+    <div class="diary-section">
+      <h2>Small fragments per day</h2>
+      <div id="diaryEntries">
+        <!-- 日志条目将在这里动态生成 -->
+      </div>
+      <div class="add-diary">
+        <h3>Record new fragments</h3>
+        <textarea id="newDiaryText" placeholder="Write down what you want to say today..."></textarea>
+        <button onclick="addNewDiary()">add</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" style="display: none;" accept="image/*">
+
+  <script>
+    // 设置相识日期（格式：年/月/日）
+    const meetDate = new Date(2025, 5 - 1, 1);
+    const meetDateFormatted = meetDate.getFullYear() + " / " + (meetDate.getMonth() + 1) + ' / ' + meetDate.getDate();
+    document.getElementById('meetDate').textContent = meetDateFormatted;
+
+    // 计算相识天数并更新显示
+    function updateDaysTogether() {
+      const today = new Date();
+      const timeDiff = today - meetDate;
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      document.getElementById('daysTogether').textContent = daysDiff;
+    }
+
+    // 初始化时更新天数
+    updateDaysTogether();
+
+    // 每天更新一次天数
+    setInterval(updateDaysTogether, 86400000); // 86400000 毫秒 = 24 小时
+
+    // 示例日志条目数组（可以保存到 localStorage 或其他存储方式）
+    let diaryEntries = [];
+
+    // 从 localStorage 加载日志条目
+    function loadDiaryEntries() {
+      const savedEntries = localStorage.getItem('diaryEntries');
+      if (savedEntries) {
+        diaryEntries = JSON.parse(savedEntries);
+        renderDiaryEntries();
+      }
+    }
+
+    // 渲染日志条目
+    function renderDiaryEntries() {
+      const diaryEntriesContainer = document.getElementById('diaryEntries');
+      diaryEntriesContainer.innerHTML = '';
+
+      if (diaryEntries.length === 0) {
+        diaryEntriesContainer.innerHTML = '<p>No shards detected, start placing your shards!</p>';
+        return;
+      }
+
+      // 按日期降序排列（最新的在前面）
+      diaryEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      diaryEntries.forEach((entry, index) => {
+        const entryElement = document.createElement('div');
+        entryElement.className = 'diary-entry';
+        entryElement.innerHTML = `
+          <div class="diary-date">${entry.date}</div>
+          <p>${entry.text}</p>
+          <button class="delete-btn" onclick="deleteDiary(${index})">Del</button>
+        `;
+        diaryEntriesContainer.appendChild(entryElement);
+      });
+    }
+
+    // 添加新的日志条目
+    function addNewDiary() {
+      const newDiaryText = document.getElementById('newDiaryText').value.trim();
+      if (newDiaryText) {
+        const today = new Date();
+        const dateStr = today.getFullYear() + ' / ' + (today.getMonth() + 1) + ' / ' + today.getDate();
+
+        diaryEntries.push({
+          date: dateStr,
+          text: newDiaryText
+        });
+
+        // 保存到 localStorage
+        localStorage.setItem('diaryEntries', JSON.stringify(diaryEntries));
+
+        // 清空输入框并重新渲染日志
+        document.getElementById('newDiaryText').value = '';
+        renderDiaryEntries();
+      } else {
+        alert('Plz type smth...');
+      }
+    }
+
+    // 删除日志条目
+    function deleteDiary(index) {
+      if (confirm('Are u sure u wanna del it?')) {
+        diaryEntries.splice(index, 1);
+        localStorage.setItem('diaryEntries', JSON.stringify(diaryEntries));
+        renderDiaryEntries();
+      }
+    }
+
+    // 上传头像
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          document.getElementById('myAvatar').src = event.target.result;
+          // 将头像保存到 localStorage
+          localStorage.setItem('myAvatar', event.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // 页面加载时初始化
+    window.onload = function () {
+      // 尝试从 localStorage 加载头像
+      const savedAvatar = localStorage.getItem('myAvatar');
+      if (savedAvatar) {
+        document.getElementById('myAvatar').src = savedAvatar;
+      }
+
+      // 加载日志条目
+      loadDiaryEntries();
+    };
+  </script>
+</body>
+
+</html>
